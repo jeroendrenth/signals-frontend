@@ -45,8 +45,8 @@ const UserDetail = () => {
   });
 
   const getFormData = useCallback(
-    e => {
-      const formData = [...new FormData(e.target.form).entries()]
+    event => {
+      const formData = [...new FormData(event.target.form).entries()]
         // convert stringified boolean values to actual booleans
         .map(([key, val]) => [key, key === 'is_active' ? val === 'true' : val])
         // reduce the entries() array to an object, merging it with the initial data
@@ -71,28 +71,31 @@ const UserDetail = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onSubmitForm = useCallback(
-    e => {
-      e.preventDefault();
+  const onSubmitForm = useCallback(formData => {
+    // event.preventDefault();
 
-      const formData = getFormData(e);
+    // const formData = getFormData(event);
 
-      if (isEqual(data, formData)) {
-        return;
-      }
+    console.log('poppe submit form data:', formData);
 
-      if (isExistingUser) {
-        patch(`${configuration.USERS_ENDPOINT}${userId}`, formData);
-      } else {
-        post(configuration.USERS_ENDPOINT, formData);
-      }
-    },
-    [data, getFormData, patch, isExistingUser, post, userId]
+    // return
+
+    // if (isEqual(data, formData)) {
+    //   return;
+    // }
+
+    // if (isExistingUser) {
+    //   patch(`${configuration.USERS_ENDPOINT}${userId}`, formData);
+    // } else {
+    //   post(configuration.USERS_ENDPOINT, formData);
+    // }
+  },
+  [data, getFormData, patch, isExistingUser, post, userId]
   );
 
   const onCancel = useCallback(
-    e => {
-      const formData = getFormData(e);
+    event => {
+      const formData = getFormData(event);
       const isPristine = isEqual(data, formData);
       confirmedCancel(isPristine);
     },
@@ -109,7 +112,12 @@ const UserDetail = () => {
 
       <FormContainer>
         {shouldRenderForm && (
-          <UserForm data={data} onCancel={onCancel} onSubmitForm={onSubmitForm} readOnly={!userCanSubmitForm} />
+          <UserForm
+            data={data}
+            onCancel={onCancel}
+            onSubmit={onSubmitForm}
+            readOnly={!userCanSubmitForm}
+          />
         )}
       </FormContainer>
     </Fragment>

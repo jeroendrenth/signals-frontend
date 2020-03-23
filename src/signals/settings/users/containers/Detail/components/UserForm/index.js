@@ -40,12 +40,26 @@ const statusOptions = [
 
 const DEFAULT_STATUS_OPTION = 'true';
 
-const UserForm = ({ data, onCancel, onSubmitForm, readOnly }) => {
+const reducer = (state, { field, value }) => ({ ...state, [field]: value });
+
+const UserForm = ({ data, onCancel, onSubmit, readOnly }) => {
   const departments = useSelector(makeSelectDepartments);
   const departmentList = departments.list.map(({ id, name }) => ({ id, value: name }));
   const userDepartments = data?.profile?.departments
     .map(department => departmentList.find(({ value }) => value === department))
     .filter(Boolean) || [];
+
+  const [state, dispatch] = React.useReducer(reducer, {
+    username: data.username,
+    first_name: data.first_name,
+    last_name: data.last_name,
+    note: data.profile && data.profile.note,
+    is_active: data.is_active === undefined ? DEFAULT_STATUS_OPTION : `${data.is_active}`,
+    department: userDepartments,
+  });
+
+  const onChange = (field, value) => { dispatch({ field, value }); };
+  const onChangeEvent = event => { onChange(event.target.name, event.target.value); };
 
   return (
     <Form action="" data-testid="detailUserForm">
@@ -53,31 +67,35 @@ const UserForm = ({ data, onCancel, onSubmitForm, readOnly }) => {
         <StyledColumn>
           <FieldGroup>
             <Input
-              defaultValue={data.username}
+              defaultValue={state.username}
+              style={{ fontSize: 20 }}
               id="username"
               name="username"
               label="E-mailadres"
-              disabled={data.username !== undefined || readOnly}
+              onChange={onChangeEvent}
+              disabled={state.username !== undefined || readOnly}
               readOnly={readOnly}
             />
           </FieldGroup>
 
           <FieldGroup>
             <Input
-              defaultValue={data.first_name}
+              defaultValue={state.first_name}
               id="first_name"
               name="first_name"
               label="Voornaam"
+              onChange={onChangeEvent}
               disabled={readOnly}
             />
           </FieldGroup>
 
           <FieldGroup>
             <Input
-              defaultValue={data.last_name}
+              defaultValue={state.last_name}
               id="last_name"
               name="last_name"
               label="Achternaam"
+              onChange={onChangeEvent}
               disabled={readOnly}
             />
           </FieldGroup>
@@ -85,10 +103,11 @@ const UserForm = ({ data, onCancel, onSubmitForm, readOnly }) => {
           <FieldGroup>
             <Label as="span">Status</Label>
             <RadioButtonList
-              defaultValue={data.is_active === undefined ? DEFAULT_STATUS_OPTION : `${data.is_active}`}
+              defaultValue={state.is_active}
               groupName="is_active"
               hasEmptySelectionButton={false}
               options={statusOptions}
+              onChange={( field, { key: value }) => { onChange({ field, value }); }}
               disabled={readOnly}
             />
           </FieldGroup>
@@ -96,10 +115,15 @@ const UserForm = ({ data, onCancel, onSubmitForm, readOnly }) => {
           <FieldGroup>
             <Label as="span">Afdeling</Label>
             <CheckboxList
-              defaultValue={userDepartments}
+              defaultValue={state.department}
               groupName="departments"
               name="department"
               options={departmentList}
+              onChange={(field, value) => {
+                console.log('state:', state);
+                console.log(field, value);
+                dispatch({ field, value });
+              }}
               disabled={readOnly}
             />
           </FieldGroup>
@@ -108,7 +132,13 @@ const UserForm = ({ data, onCancel, onSubmitForm, readOnly }) => {
         <StyledColumn push={{ small: 0, medium: 0, big: 0, large: 1, xLarge: 1 }}>
           <FieldGroup>
             <Label as="span">Notitie</Label>
-            <TextArea id="note" name="note" rows="8" defaultValue={data.profile && data.profile.note} />
+            <TextArea
+              id="note"
+              name="note"
+              rows="8"
+              defaultValue={state.note}
+              onChange={onChangeEvent}
+            />
           </FieldGroup>
         </StyledColumn>
 
@@ -119,7 +149,7 @@ const UserForm = ({ data, onCancel, onSubmitForm, readOnly }) => {
             cancelBtnLabel="Annuleren"
             onCancel={onCancel}
             submitBtnLabel="Opslaan"
-            onSubmitForm={onSubmitForm}
+            onSubmitForm={onSubmit(state)}
           />
         )}
       </Row>
@@ -130,7 +160,6 @@ const UserForm = ({ data, onCancel, onSubmitForm, readOnly }) => {
 UserForm.defaultProps = {
   data: {},
   onCancel: null,
-  onSubmitForm: null,
   readOnly: false,
 };
 
@@ -145,8 +174,14 @@ UserForm.propTypes = {
       note: PropTypes.string,
     }),
   }),
+  /** Callback handler for when filter settings should not be applied */
   onCancel: PropTypes.func,
-  onSubmitForm: PropTypes.func,
+  /**
+   * Callback handler called whenever form is submitted
+   * @param {Event} event
+   * @param {FormData} formData
+   */
+  onSubmit: PropTypes.func.isRequired,
   /** When true, none of the fields in the form can be edited */
   readOnly: PropTypes.bool,
 };
