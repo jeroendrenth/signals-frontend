@@ -45,12 +45,12 @@ const StyledHeader = styled(HeaderComponent)`
           }
         }
         h1 a span {
-          background-image: url(${"LogoShort"}) !important;
+          background-image: url(${LogoShort}) !important;
         }
       }
 
       h1 a span {
-        background-image: url(${"LogoShort"}) !important;
+        background-image: url(${LogoShort}) !important;
       }
     }
   `}
